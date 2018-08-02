@@ -4136,106 +4136,20 @@ class CitationTest(unittest.TestCase):
         json_citation['v30'] = [{u'_': u'It is the journal title'}]
         json_citation['v12'] = [{u'_': u'It is the article title'}]
         json_citation['v11'] = [{u'_': u'Article Institution'}]
-        json_citation['v11'] = [
-            {u'_': u'Article Institution'},
-            {u'_': u'Article Institution 2'},
-        ]
 
         citation = Citation(json_citation)
-        self.assertEqual(
-            citation.analytic_institution,
-            [u'Article Institution', u'Article Institution 2']
-        )
+
+        self.assertEqual(citation.analytic_institution, [u'Article Institution'])
 
     def test_analytic_institution_for_a_book_citation(self):
         json_citation = {}
 
         json_citation['v18'] = [{u'_': u'It is the book title'}]
-        json_citation['v11'] = [
-            {u'_': u'Book Institution'},
-            {u'_': u'Book Institution 2'},
-        ]
+        json_citation['v11'] = [{u'_': u'Book Institution'}]
 
         citation = Citation(json_citation)
 
-        self.assertEqual(
-            citation.analytic_institution,
-            [u'Book Institution', u'Book Institution 2']
-        )
-
-    def test_pending_deprecation_warning_of_analytic_institution(self):
-        citation = Citation({})
-        with warnings.catch_warnings(record=True) as w:
-            items = citation.analytic_institution
-            assert items is None
-            assert len(w) == 1
-            assert issubclass(w[-1].category, PendingDeprecationWarning)
-
-    def test_pending_deprecation_warning_of_monographic_institution(self):
-        citation = Citation({})
-        with warnings.catch_warnings(record=True) as w:
-            items = citation.monographic_institution
-            assert items is None
-            assert len(w) == 1
-            assert issubclass(w[-1].category, PendingDeprecationWarning)
-
-    def test_analytic_institution_authors_for_an_article_citation(self):
-        json_citation = {}
-
-        json_citation['v30'] = [{u'_': u'It is the journal title'}]
-        json_citation['v12'] = [{u'_': u'It is the article title'}]
-        json_citation['v11'] = [{u'_': u'Article Institution'}]
-        json_citation['v11'] = [
-            {u'_': u'Article Institution'},
-            {u'_': u'Article Institution 2'},
-        ]
-        citation = Citation(json_citation)
-        self.assertEqual(
-            citation.analytic_institution_authors,
-            [u'Article Institution', u'Article Institution 2']
-        )
-
-    def test_analytic_institution_authors_for_a_book_citation(self):
-        json_citation = {}
-
-        json_citation['v18'] = [{u'_': u'It is the book title'}]
-        json_citation['v11'] = [
-            {u'_': u'Book Institution'},
-            {u'_': u'Book Institution 2'},
-        ]
-        citation = Citation(json_citation)
-        self.assertEqual(
-            citation.analytic_institution_authors,
-            [u'Book Institution', u'Book Institution 2']
-        )
-
-    def test_monographic_institution_authors_for_an_article_citation(self):
-        json_citation = {}
-
-        json_citation['v30'] = [{u'_': u'It is the journal title'}]
-        json_citation['v12'] = [{u'_': u'It is the article title'}]
-        json_citation['v17'] = [
-            {u'_': u'Article Institution'},
-            {u'_': u'Article Institution 2'},
-        ]
-        citation = Citation(json_citation)
-        self.assertEqual(
-            citation.monographic_institution_authors,
-            None
-        )
-
-    def test_monographic_institution_authors_for_a_book_citation(self):
-        json_citation = {}
-
-        json_citation['v18'] = [{u'_': u'It is the book title'}]
-        json_citation['v17'] = [
-            {u'_': u'Book Institution'},
-        ]
-        citation = Citation(json_citation)
-        self.assertEqual(
-            citation.monographic_institution_authors,
-            [u'Book Institution']
-        )
+        self.assertEqual(citation.analytic_institution, [u'Book Institution'])
 
     def test_thesis_institution(self):
         json_citation = {}
@@ -4294,6 +4208,13 @@ class CitationTest(unittest.TestCase):
         citation = Citation(json_citation)
 
         self.assertEqual(citation.institutions, None)
+
+    def test_pending_deprecation_warning_of_authors(self):
+        citation = Citation({})
+        with warnings.catch_warnings(record=True) as w:
+            assert citation.authors is None
+            assert len(w) == 1
+            assert issubclass(w[-1].category, PendingDeprecationWarning)
 
     def test_authors_article(self):
         json_citation = {}
@@ -4386,6 +4307,112 @@ class CitationTest(unittest.TestCase):
 
         self.assertEqual(citation.authors, [])
 
+    def test_analytic_person_authors(self):
+        json_citation = {}
+
+        json_citation['v18'] = [{u'_': u'It is the book title'}]
+        json_citation['v12'] = [{u'_': u'It is the chapter title'}]
+        json_citation['v10'] = [{u's': u'Sullivan', u'n': u'Mike'},
+                                {u's': u'Hurricane Carter', u'n': u'Rubin'},
+                                {u's': u'Maguila Rodrigues', u'n': u'Adilson'},
+                                {u'n': u'Acelino Popó Freitas'},
+                                {u's': u'Zé Marreta'}]
+
+        expected = [{u'given_names': u'Mike', u'surname': u'Sullivan'},
+                    {u'given_names': u'Rubin', u'surname': u'Hurricane Carter'},
+                    {u'given_names': u'Adilson', u'surname': u'Maguila Rodrigues'},
+                    {u'given_names': u'Acelino Popó Freitas'},
+                    {u'surname': u'Zé Marreta'}]
+
+        citation = Citation(json_citation)
+
+        self.assertEqual(citation.analytic_person_authors, expected)
+
+    def test_without_analytic_person_authors(self):
+        json_citation = {}
+
+        json_citation['v18'] = [{u'_': u'It is the book title'}]
+        json_citation['v12'] = [{u'_': u'It is the chapter title'}]
+
+        citation = Citation(json_citation)
+
+        self.assertEqual(citation.analytic_person_authors, None)
+
+    def test_without_analytic_person_authors_but_not_a_book_citation(self):
+        json_citation = {}
+
+        json_citation['v30'] = [{u'_': u'It is the journal title'}]
+        json_citation['v12'] = [{u'_': u'It is the article title'}]
+        json_citation['v10'] = [{u's': u'Sullivan', u'n': u'Mike'},
+                                {u's': u'Hurricane Carter', u'n': u'Rubin'},
+                                {u's': u'Maguila Rodrigues', u'n': u'Adilson'},
+                                {u'n': u'Acelino Popó Freitas'},
+                                {u's': u'Zé Marreta'}]
+
+        expected = [{u'given_names': u'Mike', u'surname': u'Sullivan'},
+                    {u'given_names': u'Rubin', u'surname': u'Hurricane Carter'},
+                    {u'given_names': u'Adilson', u'surname': u'Maguila Rodrigues'},
+                    {u'given_names': u'Acelino Popó Freitas'},
+                    {u'surname': u'Zé Marreta'}]
+
+        citation = Citation(json_citation)
+
+        self.assertEqual(citation.analytic_person_authors, expected)
+
+    def test_monographic_person_authors(self):
+        json_citation = {}
+
+        json_citation['v18'] = [{u'_': u'It is the book title'}]
+        json_citation['v16'] = [{u's': u'Sullivan', u'n': u'Mike'},
+                                {u's': u'Hurricane Carter', u'n': u'Rubin'},
+                                {u's': u'Maguila Rodrigues', u'n': u'Adilson'},
+                                {u'n': u'Acelino Popó Freitas'},
+                                {u's': u'Zé Marreta'}]
+
+        expected = [{u'given_names': u'Mike', u'surname': u'Sullivan'},
+                    {u'given_names': u'Rubin', u'surname': u'Hurricane Carter'},
+                    {u'given_names': u'Adilson', u'surname': u'Maguila Rodrigues'},
+                    {u'given_names': u'Acelino Popó Freitas'},
+                    {u'surname': u'Zé Marreta'}]
+
+        citation = Citation(json_citation)
+
+        self.assertEqual(citation.monographic_person_authors, expected)
+
+    def test_without_monographic_person_authors(self):
+        json_citation = {}
+
+        json_citation['v18'] = [{u'_': u'It is the book title'}]
+        json_citation['v16'] = []
+
+        citation = Citation(json_citation)
+
+        self.assertEqual(citation.monographic_person_authors, None)
+
+    def test_without_monographic_person_authors_but_not_a_book_citation(self):
+        json_citation = {}
+
+        json_citation['v30'] = [{u'_': u'It is the journal title'}]
+        json_citation['v12'] = [{u'_': u'It is the article title'}]
+
+        citation = Citation(json_citation)
+
+        self.assertEqual(citation.monographic_person_authors, None)
+
+    def test_pending_deprecation_warning_of_analytic_authors(self):
+        citation = Citation({})
+        with warnings.catch_warnings(record=True) as w:
+            assert citation.analytic_authors is None
+            assert len(w) == 1
+            assert issubclass(w[-1].category, PendingDeprecationWarning)
+
+    def test_pending_deprecation_warning_of_monographic_authors(self):
+        citation = Citation({})
+        with warnings.catch_warnings(record=True) as w:
+            self.assertEqual(citation.monographic_authors, None)
+            assert len(w) == 1
+            assert issubclass(w[-1].category, PendingDeprecationWarning)
+
     def test_monographic_authors(self):
         json_citation = {}
 
@@ -4425,6 +4452,13 @@ class CitationTest(unittest.TestCase):
         citation = Citation(json_citation)
 
         self.assertEqual(citation.monographic_authors, None)
+
+    def test_pending_deprecation_warning_of_first_author(self):
+        citation = Citation({})
+        with warnings.catch_warnings(record=True) as w:
+            assert citation.first_author is None
+            assert len(w) == 1
+            assert issubclass(w[-1].category, PendingDeprecationWarning)
 
     def test_first_author_article(self):
         json_citation = {}
